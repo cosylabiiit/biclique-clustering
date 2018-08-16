@@ -11,11 +11,12 @@ class MaximalBicliques():
     http://genome.cs.iastate.edu/supertree/download/biclique/.
     """
 
-    def __init__(self, sbtestloc):
+    def __init__(self, sbtestloc, store_temps=False):
         """ Specify the location of sbtest file while inititlizing
         the class. """
 
         self.sbtestloc = sbtestloc
+        self.store_temps = store_temps
 
     def _serialize_edges(self):
         """ Gives a unique ID to each node and stores the mappings. """
@@ -83,7 +84,8 @@ class MaximalBicliques():
         self.bicliques = bicliques
         self.num_bicliques = len(bicliques)
 
-        # Delete temporary files.
-        remove(self._temp_input.name)
-        remove(self._temp_output.name)
-        remove(self._temp_output_size.name)
+        if not self.store_temps:
+            # Delete temporary files.
+            remove(self._temp_input.name)
+            remove(self._temp_output.name)
+            remove(self._temp_output_size.name)
