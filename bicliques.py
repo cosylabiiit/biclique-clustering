@@ -11,27 +11,22 @@ class MaximalBicliques():
     http://genome.cs.iastate.edu/supertree/download/biclique/.
     """
 
-    def __init__(
-        self,
-        sbtestloc=path.join(path.dirname(__file__), 'max-biclique'),
-        input_addr=None,
-        output_addr=None,
-        output_size_addr=None,
-        store_temps=False
-    ):
+    def __init__(self, sbtestloc='max-biclique',
+                 input_addr=None, output_addr=None, output_size_addr=None,
+                 store_temps=False):
         """ Specify the location of sbtest file while inititlizing
         the class. """
 
-        self.sbtestloc = sbtestloc
+        self.sbtestloc = path.join(path.dirname(__file__), sbtestloc)
         self.store_temps = store_temps
 
         # Create temporary files.
-        self._input_addr = input_addr if input_addr else\
-            NamedTemporaryFile(delete=False).name
-        self._output_addr = output_addr if output_addr else\
-            NamedTemporaryFile(delete=False).name
-        self._output_size_addr = output_size_addr if output_size_addr else\
-            NamedTemporaryFile(delete=False).name
+        self._input_addr = path.abspath(input_addr)\
+            if input_addr else NamedTemporaryFile(delete=False).name
+        self._output_addr = path.abspath(output_addr)\
+            if output_addr else NamedTemporaryFile(delete=False).name
+        self._output_size_addr = path.abspath(output_size_addr)\
+            if output_size_addr else NamedTemporaryFile(delete=False).name
 
     def _serialize_edges(self):
         """ Gives a unique ID to each node and stores the mappings. """
