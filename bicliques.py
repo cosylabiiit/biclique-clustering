@@ -1,4 +1,4 @@
-from os import remove
+from os import remove, path
 from subprocess import check_call
 from tempfile import NamedTemporaryFile
 
@@ -11,11 +11,22 @@ class MaximalBicliques():
     http://genome.cs.iastate.edu/supertree/download/biclique/.
     """
 
-    def __init__(self, sbtestloc):
+    def __init__(self, sbtestloc='max-biclique',
+                 input_addr=None, output_addr=None, output_size_addr=None,
+                 store_temps=False):
         """ Specify the location of sbtest file while inititlizing
         the class. """
 
-        self.sbtestloc = sbtestloc
+        self.sbtestloc = path.join(path.dirname(__file__), sbtestloc)
+        self.store_temps = store_temps
+
+        # Create temporary files.
+        self._input_addr = path.abspath(input_addr)\
+            if input_addr else NamedTemporaryFile(delete=False).name
+        self._output_addr = path.abspath(output_addr)\
+            if output_addr else NamedTemporaryFile(delete=False).name
+        self._output_size_addr = path.abspath(output_size_addr)\
+            if output_size_addr else NamedTemporaryFile(delete=False).name
 
     def _serialize_edges(self):
         """ Gives a unique ID to each node and stores the mappings. """
@@ -39,22 +50,14 @@ class MaximalBicliques():
     def _write_temp_files(self):
         """ Writes the serialised edge lists to temporary files on disk. """
 
-        # Create temporary files.
-        temp_input = NamedTemporaryFile(delete=False)
-        temp_output = NamedTemporaryFile(delete=False)
-        temp_output_size = NamedTemporaryFile(delete=False)
-
         # Write the serialsed edges.
-        with open(temp_input.name, 'w') as f:
+        with open(self._input_addr, 'w') as f:
             for e1, e2 in self._serialized_edges:
                 f.write("%d\t%d\n" % (e1, e2))
 
-        self._temp_input, self._temp_output, self._temp_output_size =\
-            temp_input, temp_output, temp_output_size
-
     def _run_biclique_command(self):
-        check_call(['./sbtest', self._temp_input.name, self._temp_output.name,
-                    self._temp_output_size.name],
+        check_call(['./sbtest', self._input_addr, self._output_addr,
+                    self._output_size_addr],
                    cwd=self.sbtestloc)
 
     def calculate_bicliques(self, edge_list):
@@ -72,10 +75,9 @@ class MaximalBicliques():
         self._run_biclique_command()
 
         bicliques = list()
-        with open(self._temp_output.name, 'r') as f:
-            bic = f.read().split('\n\n')[:-1]
-            for i, b in enumerate(bic):
-                spl = b.split('\n')
+        with open(self._output_addr, 'r') as f:
+            for bic in f.read().split('\n\n')[:-1]:
+                spl = bic.split('\n')
                 texta = [self._id2nodea[int(i)] for i in spl[0].split()]
                 textb = [self._id2nodeb[int(i)] for i in spl[1].split()]
                 bicliques.append([texta, textb])
@@ -83,7 +85,8 @@ class MaximalBicliques():
         self.bicliques = bicliques
         self.num_bicliques = len(bicliques)
 
-        # Delete temporary files.
-        remove(self._temp_input.name)
-        remove(self._temp_output.name)
-        remove(self._temp_output_size.name)
+        if not self.store_temps:
+            # Delete temporary files.
+            remove(self._input_addr)
+            remove(self._output_addr)
+            remove(self._output_size_addr)

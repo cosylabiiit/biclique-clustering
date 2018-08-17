@@ -1,0 +1,3 @@
+[submodule "max-biclique"]
+	path = max-biclique
+	url = https://github.com/hadisfr/biclique
